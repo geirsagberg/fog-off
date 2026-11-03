@@ -4,8 +4,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APK_PATH="$ROOT_DIR/app/build/outputs/apk/debug/app-debug.apk"
-APPLICATION_ID="net.sagberg.kartoffel"
-ACTIVITY="$APPLICATION_ID/.MainActivity"
+APPLICATION_ID="net.sagberg.kartoffel.debug"
+ACTIVITY="$APPLICATION_ID/net.sagberg.kartoffel.MainActivity"
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     echo "Usage: scripts/deploy-phone.sh"

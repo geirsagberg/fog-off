@@ -1,1 +1,7 @@
 MAPS_API_KEY=replace-with-local-google-maps-api-key
+
+# Upload key for Play Console releases. Paths are relative to the project root.
+UPLOAD_STORE_FILE=replace-with-path-to-upload-keystore.jks
+UPLOAD_STORE_PASSWORD=replace-with-keystore-password
+UPLOAD_KEY_ALIAS=upload
+UPLOAD_KEY_PASSWORD=replace-with-key-password
