@@ -31,6 +31,28 @@ android {
         manifestPlaceholders["MAPS_API_KEY"] = localProperty("MAPS_API_KEY")
     }
 
+    signingConfigs {
+        val uploadStoreFile = localProperty("UPLOAD_STORE_FILE")
+        if (uploadStoreFile.isNotEmpty()) {
+            create("upload") {
+                storeFile = rootProject.file(uploadStoreFile)
+                storePassword = localProperty("UPLOAD_STORE_PASSWORD")
+                keyAlias = localProperty("UPLOAD_KEY_ALIAS")
+                keyPassword = localProperty("UPLOAD_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        debug {
+            // Lets debug builds sit next to the Play build on the same phone.
+            applicationIdSuffix = ".debug"
+        }
+        release {
+            signingConfig = signingConfigs.findByName("upload")
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
