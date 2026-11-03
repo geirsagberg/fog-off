@@ -1,7 +1,7 @@
 # Patched H3 Android artifact
 
-`h3-android-4.4.0-kartoffel.1.aar` is a temporary rebuild of
-`com.uber:h3-android:4.4.0` for Kartoffel.
+`h3-android-4.4.0-fogoff.1.aar` is a temporary rebuild of
+`com.uber:h3-android:4.4.0` for Fog Off.
 
 The published Android native libraries omit `libm.so` from their ELF dependencies and fail to
 load on Android. This artifact rebuilds both supported ABIs with the fix from

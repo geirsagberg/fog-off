@@ -1,0 +1,175 @@
+package net.sagberg.fogoff.inspection
+
+import android.content.Context
+import androidx.room3.Room
+import androidx.sqlite.driver.AndroidSQLiteDriver
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import kotlinx.coroutines.runBlocking
+import net.sagberg.fogoff.coverage.GeoCoordinate
+import net.sagberg.fogoff.coverage.H3CoverageCells
+import net.sagberg.fogoff.storage.CoverageEvidenceSource
+import net.sagberg.fogoff.storage.FogOffDatabase
+import net.sagberg.fogoff.storage.LocationSampleEntity
+import net.sagberg.fogoff.storage.RecordingEntity
+import net.sagberg.fogoff.storage.inferredEvidenceMaskOf
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+
+@RunWith(AndroidJUnit4::class)
+class TrackingInspectionLoaderTest {
+    private lateinit var database: FogOffDatabase
+
+    @Before
+    fun openDatabase() {
+        val context = ApplicationProvider.getApplicationContext<Context>()
+        database = Room.inMemoryDatabaseBuilder(context, FogOffDatabase::class.java)
+            .setDriver(AndroidSQLiteDriver())
+            .allowMainThreadQueries()
+            .build()
+    }
+
+    @After
+    fun closeDatabase() = database.close()
+
+    @Test
+    fun loaderAppliesSourcesAndInclusiveStartExclusiveEndWithoutLosingSamples() = runBlocking {
+        val coordinate = GeoCoordinate(59.9109, 10.7522)
+        val recordingId = database.recordings().insert(RecordingEntity(1_000, 5_000))
+        insertSample(1_000, coordinate, "automatic_tracking", accepted = true)
+        insertSample(2_000, coordinate, "automatic_tracking", accepted = false)
+        insertSample(3_000, coordinate, "recording", accepted = true, recordingId = recordingId)
+
+        val snapshot = TrackingInspectionLoader(database).load(
+            TrackingInspectionFilter(
+                sources = setOf(InspectionSource.Automatic),
+                time = TrackingInspectionTime.Custom(startMillis = 1_000, endMillis = 3_000),
+            ),
+        )
+
+        assertEquals(1, snapshot.cells.size)
+        assertEquals(DiagnosticCellState.Observed, snapshot.cells.single().state)
+        assertEquals(2, snapshot.cells.single().samples.size)
+        assertEquals(listOf(2_000L, 1_000L), snapshot.cells.single().samples.map { it.capturedAtMillis })
+        assertEquals(
+            listOf(1_000L, 2_000L),
+            snapshot.cells.single().samples(SampleSort.OldestFirst).map { it.capturedAtMillis },
+        )
+        assertEquals(1, snapshot.cells.single().acceptedCount)
+        assertEquals(1, snapshot.cells.single().rejectedCount)
+
+        val empty = TrackingInspectionLoader(database).load(
+            TrackingInspectionFilter.Default.copy(
+                time = TrackingInspectionTime.Custom(10_000, 11_000),
+            ),
+        )
+        assertTrue(empty.cells.isEmpty())
+
+        val recordings = TrackingInspectionLoader(database).load(
+            TrackingInspectionFilter.Default.copy(sources = setOf(InspectionSource.Recordings)),
+        )
+        assertEquals(listOf(3_000L), recordings.cells.single().samples.map { it.capturedAtMillis })
+
+        val none = TrackingInspectionLoader(database).load(
+            TrackingInspectionFilter.Default.copy(sources = emptySet()),
+        )
+        assertTrue(none.cells.isEmpty())
+    }
+
+    @Test
+    fun inferredEvidenceOutranksRejectedSamplesWithoutFabricatingHistory() = runBlocking {
+        val h3 = H3CoverageCells()
+        val coordinate = GeoCoordinate(59.9109, 10.7522)
+        val rejectedAndInferredCell = h3.cellAt(coordinate).value
+        val inferredOnlyCell = h3.cellAt(GeoCoordinate(59.910527, 10.751046)).value
+        val rejectedOnlyCoordinate = GeoCoordinate(59.9200, 10.7600)
+        val rejectedOnlyCell = h3.cellAt(rejectedOnlyCoordinate).value
+        insertSample(2_000, coordinate, "automatic_tracking", accepted = false)
+        insertSample(2_100, rejectedOnlyCoordinate, "automatic_tracking", accepted = false)
+        listOf(rejectedAndInferredCell, inferredOnlyCell).forEach { cellId ->
+            database.coverageCells().upsert(
+                cellId = cellId,
+                firstSeenAtMillis = 1_500,
+                lastSeenAtMillis = 2_500,
+                evidenceMask = inferredEvidenceMaskOf(CoverageEvidenceSource.AUTOMATIC_TRACKING),
+            )
+        }
+
+        val snapshot = TrackingInspectionLoader(database).load(TrackingInspectionFilter.Default)
+
+        assertEquals(2, snapshot.cells.count { it.state == DiagnosticCellState.Inferred })
+        assertEquals(DiagnosticCellState.RejectedOnly, snapshot.cells.single { it.cellId == rejectedOnlyCell }.state)
+        assertTrue(snapshot.cells.single { it.cellId == inferredOnlyCell }.samples.isEmpty())
+        assertEquals(1, snapshot.cells.single { it.cellId == rejectedAndInferredCell }.rejectedCount)
+        assertEquals(null, snapshot.cells.single { it.cellId == rejectedOnlyCell }.evidenceFirstMillis)
+        assertEquals(2_100L, snapshot.cells.single { it.cellId == rejectedOnlyCell }.sampleFirstMillis)
+    }
+
+    @Test
+    fun slowLoadLogContainsOnlyCountsFilterKindsAndStageDurations() = runBlocking {
+        val ticks = ArrayDeque(listOf(0L, 600L, 700L, 800L))
+        val messages = mutableListOf<String>()
+
+        TrackingInspectionLoader(
+            database = database,
+            clock = InspectionMonotonicClock { ticks.removeFirst() },
+            logger = TrackingInspectionLogger(messages::add),
+        ).load(TrackingInspectionFilter.Default)
+
+        assertEquals(1, messages.size)
+        assertTrue(messages.single().contains("db_ms=600"))
+        assertTrue(messages.single().contains("samples=0 cells=0 sources=all time=all"))
+        assertTrue(!messages.single().contains("latitude") && !messages.single().contains("longitude"))
+    }
+
+    @Test
+    fun loaderListsDrawnRoutesByCreationTimeWithCellDerivedPreview() = runBlocking {
+        val h3 = H3CoverageCells()
+        val cells = setOf(
+            h3.cellAt(GeoCoordinate(59.9109, 10.7522)).value,
+            h3.cellAt(GeoCoordinate(59.9119, 10.7552)).value,
+        )
+        val routeId = database.drawnRoutes().create(4_000, cells)
+
+        val snapshot = TrackingInspectionLoader(database).load(TrackingInspectionFilter.Default)
+
+        val route = snapshot.drawnRoutes.single()
+        assertEquals(routeId, route.id)
+        assertEquals(4_000L, route.createdAtMillis)
+        assertEquals(cells, route.cells.map { it.id.toLong() }.toSet())
+        assertTrue(route.cells.all { it.boundary.size >= 3 })
+
+        val withoutDrawnRoutes = TrackingInspectionLoader(database).load(
+            TrackingInspectionFilter.Default.copy(
+                sources = setOf(InspectionSource.Automatic, InspectionSource.Recordings),
+            ),
+        )
+        assertTrue(withoutDrawnRoutes.drawnRoutes.isEmpty())
+    }
+
+    private suspend fun insertSample(
+        capturedAtMillis: Long,
+        coordinate: GeoCoordinate,
+        source: String,
+        accepted: Boolean,
+        recordingId: Long? = null,
+    ) {
+        database.locationSamples().insert(
+            LocationSampleEntity(
+                capturedAtMillis = capturedAtMillis,
+                latitude = coordinate.latitude,
+                longitude = coordinate.longitude,
+                accuracyMeters = 8.0,
+                source = source,
+                trigger = "test",
+                accepted = accepted,
+                rejectionReason = if (accepted) null else "test_rejection",
+                recordingId = recordingId,
+            ),
+        )
+    }
+}

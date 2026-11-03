@@ -1,0 +1,36 @@
+package net.sagberg.fogoff.settings
+
+import kotlinx.coroutines.flow.Flow
+
+internal data class CoverageSettings(
+    val maximumAcceptedAccuracyMeters: Int,
+    val maximumInterpolationDistanceSteps: Int,
+) {
+    init {
+        require(maximumAcceptedAccuracyMeters in ACCEPTED_ACCURACY_RANGE)
+        require((maximumAcceptedAccuracyMeters - ACCEPTED_ACCURACY_RANGE.first) % 5 == 0)
+        require(maximumInterpolationDistanceSteps in INTERPOLATION_GAP_RANGE)
+    }
+
+    companion object {
+        val ACCEPTED_ACCURACY_RANGE = 20..50
+        val INTERPOLATION_GAP_RANGE = 1..10
+
+        val Default = CoverageSettings(
+            maximumAcceptedAccuracyMeters = 25,
+            maximumInterpolationDistanceSteps = 3,
+        )
+    }
+}
+
+internal interface CoverageSettingsRepository {
+    fun observe(): Flow<CoverageSettings>
+
+    suspend fun current(): CoverageSettings
+
+    suspend fun setMaximumAcceptedAccuracyMeters(value: Int)
+
+    suspend fun setMaximumInterpolationDistanceSteps(value: Int)
+
+    suspend fun reset()
+}

@@ -1,4 +1,4 @@
-# Kartoffel MVP
+# Fog Off MVP
 
 ## Goal
 
@@ -8,7 +8,7 @@ The product language and principles live in [`CONTEXT.md`](../CONTEXT.md). Archi
 
 ## Experience
 
-Kartoffel opens to a Map that centers when location becomes available. This initial foreground fix is used only for map positioning and does not clear coverage. Deliberate Recordings accuracy-gate their samples and clear accepted Coverage Cells; inaccurate fixes remain covered. Fog hides all other unvisited cells. A compact app bar keeps Automatic Tracking status and the start/stop Recording control visible; Settings and Tracking Diagnostics stay in its overflow menu. Settings is a permanent secondary screen for runtime coverage tuning. The map retains an edge-to-edge current-location control.
+Fog Off opens to a Map that centers when location becomes available. This initial foreground fix is used only for map positioning and does not clear coverage. Deliberate Recordings accuracy-gate their samples and clear accepted Coverage Cells; inaccurate fixes remain covered. Fog hides all other unvisited cells. A compact app bar keeps Automatic Tracking status and the start/stop Recording control visible; Settings and Tracking Diagnostics stay in its overflow menu. Settings is a permanent secondary screen for runtime coverage tuning. The map retains an edge-to-edge current-location control.
 
 Permissions are requested in context: foreground location for map/recording use, and background location plus any required notification/foreground-service permissions when Automatic Tracking is enabled.
 
@@ -33,7 +33,7 @@ Permissions are requested in context: foreground location for map/recording use,
 - Activity Mode is aligned to the fix capture time when possible and otherwise stored as `UNKNOWN`. Live recognition state is not durable, resets to `UNKNOWN` after process recreation, and expires after 30 minutes without a fresh signal.
 - Fresh `STILL` suppresses active automatic windows. Unavailable or stale recognition permits an inexact, roughly hourly fallback window so denied recognition does not silently disable capture.
 - Consecutive accepted automatic fixes, including Opportunistic Fixes, may use Conservative Interpolation within the configured Maximum Interpolation Distance and a two-minute elapsed-time limit.
-- Automatic registrations recover after reboot, package replacement, and app launch without repeating the initial high-accuracy acquisition. Force-stop remains a platform boundary until the user opens Kartoffel again.
+- Automatic registrations recover after reboot, package replacement, and app launch without repeating the initial high-accuracy acquisition. Force-stop remains a platform boundary until the user opens Fog Off again.
 - Automatic Tracking is best-effort and notification-free: Android background throttling may leave Gaps. It does not keep a location foreground service running; Recordings remain the reliable notification-backed fallback.
 - Recordings provide higher-fidelity start/stop capture with Conservative Interpolation between accepted samples.
 - Recordings start with a 5-second high-accuracy interval and wait for the first accuracy-gated fix before applying Activity Mode. This ensures starting a recording while still can clear the current Coverage Cell. After that initial fix, recordings adapt to 10 seconds while walking, 5 seconds while running or cycling, and 1 second in a vehicle; a `STILL` transition suspends high-accuracy fixes until movement resumes. If no fix passes the accuracy gate within 30 seconds, the current Activity Mode takes effect to bound high-power startup work.

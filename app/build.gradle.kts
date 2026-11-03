@@ -17,11 +17,11 @@ fun localProperty(name: String, defaultValue: String = ""): String =
     localProperties.getProperty(name) ?: defaultValue
 
 android {
-    namespace = "net.sagberg.kartoffel"
+    namespace = "net.sagberg.fogoff"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "net.sagberg.kartoffel"
+        applicationId = "net.sagberg.fogoff"
         minSdk = 36
         targetSdk = 37
         versionCode = 1
@@ -91,7 +91,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.google.maps.compose)
-    implementation(files("libs/h3-android-4.4.0-kartoffel.1.aar"))
+    implementation(files("libs/h3-android-4.4.0-fogoff.1.aar"))
     implementation(libs.play.services.location)
     implementation(libs.play.services.maps)
     implementation(libs.room3.runtime)

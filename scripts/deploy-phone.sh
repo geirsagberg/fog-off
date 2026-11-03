@@ -4,8 +4,8 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APK_PATH="$ROOT_DIR/app/build/outputs/apk/debug/app-debug.apk"
-APPLICATION_ID="net.sagberg.kartoffel.debug"
-ACTIVITY="$APPLICATION_ID/net.sagberg.kartoffel.MainActivity"
+APPLICATION_ID="net.sagberg.fogoff.debug"
+ACTIVITY="$APPLICATION_ID/net.sagberg.fogoff.MainActivity"
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     echo "Usage: scripts/deploy-phone.sh"
@@ -54,13 +54,13 @@ fi
 
 SERIAL="${DEVICES[0]}"
 
-echo "Building Kartoffel..."
+echo "Building Fog Off..."
 "$ROOT_DIR/gradlew" -p "$ROOT_DIR" :app:assembleDebug
 
 echo "Installing on $SERIAL..."
 "$ADB" -s "$SERIAL" install -r -t "$APK_PATH"
 
-echo "Launching Kartoffel..."
+echo "Launching Fog Off..."
 "$ADB" -s "$SERIAL" shell am start -n "$ACTIVITY" >/dev/null
 
 echo "Deployed successfully."
