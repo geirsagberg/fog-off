@@ -1,6 +1,6 @@
-# Kartoffel
+# Fog Off
 
-Kartoffel is a local-first Android app that remembers where its user has been and reveals that history on a **Map**.
+Fog Off is a local-first Android app that remembers where its user has been and reveals that history on a **Map**.
 
 ## Product principles
 
@@ -32,11 +32,11 @@ Kartoffel is a local-first Android app that remembers where its user has been an
 - **Tracking Mode:** the current coverage-capture policy: Off, Automatic, or Recording. Only one mode operates at a time; a Recording temporarily overrides Automatic Tracking and stopping it returns to Automatic when the durable opt-in remains enabled, otherwise Off.
 - **Automatic Tracking:** durable, best-effort opt-in capture that remains enabled until explicitly disabled, does not require starting a Recording, and may leave Gaps when Android limits background delivery.
 - **Capture Window:** a self-terminating period that may collect multiple independently accuracy-gated fixes after a movement signal or conservative fallback while Automatic Tracking is enabled. It ends at a time limit, a delivered-fix limit, or an earlier stationary signal; rejected fixes consume the delivery limit.
-- **Opportunistic Fix:** a location fix derived for another system client and received by Kartoffel without causing additional location work. While Tracking Mode is Automatic, an accurate Opportunistic Fix may clear its own Coverage Cell and participate in Conservative Interpolation under the same settings and two-minute limit as other automatic fixes. It does not open or extend a Capture Window.
+- **Opportunistic Fix:** a location fix derived for another system client and received by Fog Off without causing additional location work. While Tracking Mode is Automatic, an accurate Opportunistic Fix may clear its own Coverage Cell and participate in Conservative Interpolation under the same settings and two-minute limit as other automatic fixes. It does not open or extend a Capture Window.
 - **Recording:** deliberate, higher-fidelity capture for a route the user cares about.
-- **Location Sample:** a location fix Kartoffel stores, whether accepted or rejected.
+- **Location Sample:** a location fix Fog Off stores, whether accepted or rejected.
 - **Activity Mode:** the most recently recognized movement state that can be credibly aligned with when a location fix was captured. `Unknown` covers unavailable, absent, stale, or time-unalignable recognition, including fixes retained from before Activity Mode was recorded.
-- **Requested Location Interval:** the location-update cadence Kartoffel asks Android to provide. It describes tracking policy, not the cadence Android actually delivers.
+- **Requested Location Interval:** the location-update cadence Fog Off asks Android to provide. It describes tracking policy, not the cadence Android actually delivers.
 - **Tracking Diagnostics:** a secondary tuning view for inspecting what tracking is doing and why coverage was or was not cleared. During the MVP it is an owner/developer instrument, not a polished end-user explanation.
 - **Tracking Inspection:** reviewing stored Location Samples and Coverage Evidence on the Map.
 - **Diagnostic Sample Cell:** the H3 cell containing a retained Location Sample's reported coordinate, whether accepted or rejected. It does not itself represent Street-Level Coverage or the sample's accuracy radius; Tracking Inspection may also render Inferred Coverage Evidence in Coverage Cells containing no retained sample.

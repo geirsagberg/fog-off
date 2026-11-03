@@ -1,4 +1,4 @@
-# Kartoffel brand
+# Fog Off brand
 
 ## Color direction
 

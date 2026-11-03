@@ -1,0 +1,97 @@
+package net.sagberg.fogoff.inspection
+
+import net.sagberg.fogoff.coverage.GeoBounds
+import net.sagberg.fogoff.coverage.GeoCoordinate
+import net.sagberg.fogoff.coverage.CoverageCellShape
+
+internal enum class InspectionSource { Automatic, Recordings, DrawnRoutes }
+
+internal sealed interface TrackingInspectionTime {
+    data object AllTime : TrackingInspectionTime
+    data class Last24Hours(val endMillis: Long) : TrackingInspectionTime
+    data class Last7Days(val endMillis: Long) : TrackingInspectionTime
+    data class Custom(val startMillis: Long, val endMillis: Long) : TrackingInspectionTime {
+        init {
+            require(startMillis < endMillis)
+        }
+    }
+}
+
+internal data class TrackingInspectionFilter(
+    val sources: Set<InspectionSource>,
+    val time: TrackingInspectionTime,
+) {
+    companion object {
+        val Default = TrackingInspectionFilter(
+            sources = InspectionSource.entries.toSet(),
+            time = TrackingInspectionTime.AllTime,
+        )
+    }
+}
+
+internal enum class DiagnosticCellState { Observed, Inferred, RejectedOnly }
+
+internal enum class DiagnosticProvenance {
+    AutomaticObserved,
+    RecordingObserved,
+    AutomaticInferred,
+    RecordingInferred,
+    AutomaticRejected,
+    RecordingRejected,
+}
+
+internal enum class SampleSort { NewestFirst, OldestFirst }
+
+internal data class DiagnosticSample(
+    val id: Long,
+    val capturedAtMillis: Long,
+    val accuracyMeters: Double,
+    val source: String,
+    val trigger: String?,
+    val recordingId: Long?,
+    val activityMode: String,
+    val accepted: Boolean,
+    val rejectionReason: String?,
+)
+
+internal data class DiagnosticSampleCell(
+    val cellId: Long,
+    val boundary: List<GeoCoordinate>,
+    val state: DiagnosticCellState,
+    val provenance: Set<DiagnosticProvenance>,
+    val acceptedCount: Int,
+    val rejectedCount: Int,
+    val evidenceFirstMillis: Long?,
+    val evidenceLastMillis: Long?,
+    val sampleFirstMillis: Long?,
+    val sampleLastMillis: Long?,
+    val samples: List<DiagnosticSample>,
+) {
+    fun samples(sort: SampleSort): List<DiagnosticSample> = when (sort) {
+        SampleSort.NewestFirst -> samples
+        SampleSort.OldestFirst -> samples.asReversed()
+    }
+}
+
+internal data class InspectionDrawnRoute(
+    val id: Long,
+    val createdAtMillis: Long,
+    val cells: List<CoverageCellShape>,
+)
+
+internal data class TrackingInspectionMeasurements(
+    val databaseMillis: Long,
+    val aggregationMillis: Long,
+    val renderPreparationMillis: Long,
+)
+
+internal data class TrackingInspectionSnapshot(
+    val filter: TrackingInspectionFilter,
+    val cells: List<DiagnosticSampleCell>,
+    val measurements: TrackingInspectionMeasurements,
+    val drawnRoutes: List<InspectionDrawnRoute> = emptyList(),
+) {
+    fun cellsIntersecting(viewport: GeoBounds): List<DiagnosticSampleCell> = cells.filter { cell ->
+        GeoBounds.containing(cell.boundary).intersects(viewport)
+    }
+}

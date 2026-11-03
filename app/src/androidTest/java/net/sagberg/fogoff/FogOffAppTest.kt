@@ -1,0 +1,99 @@
+package net.sagberg.fogoff
+
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
+import androidx.core.view.WindowCompat
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.test.platform.app.InstrumentationRegistry
+import net.sagberg.fogoff.settings.Appearance
+import net.sagberg.fogoff.settings.AppearancePreferences
+import net.sagberg.fogoff.settings.CoverageOutlineStyle
+import net.sagberg.fogoff.settings.FogDetail
+import net.sagberg.fogoff.settings.ThemeMode
+import org.junit.After
+import org.junit.Assert.assertEquals
+import org.junit.Before
+import org.junit.Rule
+import org.junit.Test
+
+class FogOffAppTest {
+    @get:Rule
+    val compose = createComposeRule()
+
+    private val appearancePreferences = AppearancePreferences(
+        InstrumentationRegistry.getInstrumentation().targetContext,
+    )
+    private lateinit var originalAppearance: Appearance
+
+    @Before
+    fun rememberAppearance() {
+        originalAppearance = appearancePreferences.load()
+        appearancePreferences.save(Appearance.Default)
+    }
+
+    @After
+    fun restoreAppearance() {
+        appearancePreferences.save(originalAppearance)
+    }
+
+    @Test
+    fun settingsOpensFromTheMapAndBackReturnsToIt() {
+        compose.setContent { FogOffApp() }
+
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Settings").performClick()
+
+        compose.onNodeWithText("Maximum accepted accuracy").assertIsDisplayed()
+        compose.onNodeWithTag("coverage_settings_back").performClick()
+        compose.onNodeWithText("Fog Off").assertIsDisplayed()
+    }
+
+    @Test
+    fun appearanceChoicesApplyAndAreKeptOnTheDevice() {
+        lateinit var activity: ComponentActivity
+        compose.setContent {
+            activity = LocalActivity.current as ComponentActivity
+            FogOffApp()
+        }
+
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Appearance").performClick()
+        compose.onNodeWithText("System").assertIsSelected()
+        compose.onNodeWithText("Teal").assertIsSelected()
+        compose.onNodeWithText("Medium").assertIsSelected()
+
+        compose.onNodeWithText("Dark").performClick()
+        compose.runOnIdle {
+            val bars = WindowCompat.getInsetsController(activity.window, activity.window.decorView)
+            assertEquals(false, bars.isAppearanceLightStatusBars)
+            assertEquals(false, bars.isAppearanceLightNavigationBars)
+        }
+        compose.onNodeWithText("Halo").performClick()
+        compose.onNodeWithText("High").performClick()
+        compose.onNodeWithText("Done").performClick()
+
+        compose.runOnIdle {
+            assertEquals(
+                Appearance(ThemeMode.Dark, CoverageOutlineStyle.Halo, FogDetail.High),
+                appearancePreferences.load(),
+            )
+        }
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Appearance").performClick()
+        compose.onNodeWithText("Dark").assertIsSelected()
+        compose.onNodeWithText("Halo").assertIsSelected()
+        compose.onNodeWithText("High").assertIsSelected()
+        compose.onNodeWithText("Light").performClick()
+        compose.runOnIdle {
+            val bars = WindowCompat.getInsetsController(activity.window, activity.window.decorView)
+            assertEquals(true, bars.isAppearanceLightStatusBars)
+            assertEquals(true, bars.isAppearanceLightNavigationBars)
+        }
+    }
+}
