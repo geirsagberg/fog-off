@@ -19,7 +19,7 @@ Parallel threads share this machine's emulators, and every worktree installs the
 
 ### Issue tracker
 
-Issues and specs live in GitHub Issues for `geirsagberg/kartoffel`. See `docs/agents/issue-tracker.md`.
+Issues and specs live in GitHub Issues for `geirsagberg/fog-off`. See `docs/agents/issue-tracker.md`.
 Before running any `gh` operation, ensure the active GitHub account is `geirsagberg`; if needed, run `gh auth switch --hostname github.com --user geirsagberg` first.
 
 ### Triage labels
