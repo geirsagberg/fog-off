@@ -32,10 +32,4 @@ Debug builds use the application ID `net.sagberg.fogoff.debug`, so they install 
 
 ## Play Console requirements
 
-Closed testing releases are reviewed. Before the first review, complete:
-
-- the background location permission declaration, including a short video that shows the feature using background location
-- a privacy policy URL
-- the Data safety form
-- the content rating questionnaire
-- the target audience
+Closed testing releases are reviewed. Before the first review, complete the store listing and the **App content** forms. [Play Console answers](play-console.md) has what to enter, including the privacy policy URL, the Data safety form and the background location declaration.

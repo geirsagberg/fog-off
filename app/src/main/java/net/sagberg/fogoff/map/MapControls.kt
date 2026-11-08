@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
@@ -553,6 +554,8 @@ private fun FloatingMapBar(
     onConfirmDrawnRoute: () -> Unit,
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
+    var automaticTrackingDisclosureOpen by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
     val expanded = inspectionActive || manualDrawingActive
 
     Surface(
@@ -665,7 +668,7 @@ private fun FloatingMapBar(
                                 if (isAutomaticTrackingEnabled) {
                                     onDisableAutomaticTracking()
                                 } else {
-                                    onEnableAutomaticTracking()
+                                    automaticTrackingDisclosureOpen = true
                                 }
                             },
                             enabled = !isRecording || isAutomaticTrackingEnabled,
@@ -684,9 +687,47 @@ private fun FloatingMapBar(
                                 menuActions.onOpenTrackingDiagnostics()
                             },
                         )
+                        DropdownMenuItem(
+                            text = { Text("Privacy policy") },
+                            onClick = {
+                                menuExpanded = false
+                                uriHandler.openUri(PRIVACY_POLICY_URL)
+                            },
+                        )
                     }
                 }
             }
         }
     }
+
+    if (automaticTrackingDisclosureOpen) {
+        // Google Play requires this disclosure before the background location prompt.
+        AlertDialog(
+            onDismissRequest = { automaticTrackingDisclosureOpen = false },
+            title = { Text("Track automatically?") },
+            text = {
+                Text(
+                    "Fog Off collects your location in the background, even when the app " +
+                        "is closed, to clear fog where you go. Your location history " +
+                        "stays on this device.",
+                )
+            },
+            dismissButton = {
+                TextButton(onClick = { automaticTrackingDisclosureOpen = false }) {
+                    Text("Not now")
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        automaticTrackingDisclosureOpen = false
+                        onEnableAutomaticTracking()
+                    },
+                ) { Text("Continue") }
+            },
+        )
+    }
 }
+
+private const val PRIVACY_POLICY_URL =
+    "https://github.com/geirsagberg/fog-off/blob/main/PRIVACY.md"
