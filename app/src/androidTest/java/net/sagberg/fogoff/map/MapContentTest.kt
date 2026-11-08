@@ -117,6 +117,7 @@ class MapContentTest {
         compose.onNodeWithText("Tracking inspection").assertIsDisplayed()
         compose.onNodeWithText("Enable automatic tracking").assertIsDisplayed()
         compose.onNodeWithText("Tracking diagnostics").assertIsDisplayed()
+        compose.onNodeWithText("Privacy policy").assertIsDisplayed()
         compose.onAllNodesWithText("Draw route").assertCountEquals(0)
         compose.onNodeWithText("Settings").performClick()
         compose.runOnIdle { assertEquals(true, settingsOpened) }
@@ -420,6 +421,12 @@ class MapContentTest {
 
         compose.onNodeWithContentDescription("More options").performClick()
         compose.onNodeWithText("Enable automatic tracking").performClick()
+        compose.runOnIdle { assertEquals(false, automaticEnabled.value) }
+        compose.onNodeWithText("Not now").performClick()
+        compose.runOnIdle { assertEquals(false, automaticEnabled.value) }
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Enable automatic tracking").performClick()
+        compose.onNodeWithText("Continue").performClick()
         compose.runOnIdle { assertEquals(true, automaticEnabled.value) }
         compose.onNodeWithContentDescription("More options").performClick()
         compose.onNodeWithText("Disable automatic tracking").performClick()
