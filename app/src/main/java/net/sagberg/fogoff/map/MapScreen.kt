@@ -641,6 +641,10 @@ private fun MapRoute(
                             ),
                             contentDescription = "Route waypoint ${index + 1}",
                             zIndex = 23f,
+                            // The map delivers a tap after the double-tap timeout, when the
+                            // waypoint it added is already under the finger. Handling the click
+                            // stops the map from centering on that waypoint.
+                            onClick = { true },
                         )
                     }
                 }
