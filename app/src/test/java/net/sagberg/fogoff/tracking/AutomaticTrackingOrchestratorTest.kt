@@ -20,7 +20,6 @@ class AutomaticTrackingOrchestratorTest {
         assertTrue(gateway.preference.enabled)
         assertEquals(1, actions.registerActivityCount)
         assertEquals(0, actions.registerOpportunisticCount)
-        assertEquals(listOf(AUTOMATIC_FALLBACK_INTERVAL_MILLIS), actions.scheduledFallbacks)
         assertEquals(
             listOf(
                 AutomaticCaptureRequest(
@@ -71,7 +70,6 @@ class AutomaticTrackingOrchestratorTest {
 
         assertTrue(gateway.preference.enabled)
         assertEquals(0, actions.registerActivityCount)
-        assertTrue(actions.scheduledFallbacks.isEmpty())
         assertTrue(actions.captureRequests.isEmpty())
     }
 
@@ -114,34 +112,7 @@ class AutomaticTrackingOrchestratorTest {
     }
 
     @Test
-    fun freshStillSuppressesFallbackUntilActivityBecomesStale() = runBlocking {
-        val gateway = FakeAutomaticTrackingGateway(
-            preference = AutomaticTrackingPreference(true, 1_000),
-        )
-        val actions = FakeAutomaticTrackingActions()
-        val orchestrator = AutomaticTrackingOrchestrator(gateway, actions)
-        orchestrator.onActivity(RecordingActivity.STILL, 1_000, 1_000)
-        actions.captureRequests.clear()
-
-        orchestrator.onFallback(elapsedRealtimeMillis = 1_000 + 29 * 60 * 1_000L)
-
-        assertTrue(actions.captureRequests.isEmpty())
-
-        orchestrator.onFallback(elapsedRealtimeMillis = 1_000 + 31 * 60 * 1_000L)
-
-        assertEquals(
-            AutomaticCaptureRequest(
-                trigger = AutomaticFixTrigger.FALLBACK_WINDOW,
-                activity = RecordingActivity.UNKNOWN,
-                intervalMillis = 10_000,
-            ),
-            actions.captureRequests.single(),
-        )
-        assertEquals(2, actions.scheduledFallbacks.size)
-    }
-
-    @Test
-    fun staleMovementDoesNotOpenAWindowAndFreshMovementSuppressesFallback() = runBlocking {
+    fun staleMovementDoesNotOpenAWindow() = runBlocking {
         val gateway = FakeAutomaticTrackingGateway(
             preference = AutomaticTrackingPreference(true, 1_000),
         )
@@ -153,13 +124,6 @@ class AutomaticTrackingOrchestratorTest {
             observedAtElapsedRealtimeMillis = 1_000,
             currentElapsedRealtimeMillis = 1_000 + AUTOMATIC_ACTIVITY_FRESHNESS_MILLIS + 1,
         )
-        orchestrator.onFallback(1_000 + AUTOMATIC_ACTIVITY_FRESHNESS_MILLIS + 2)
-        assertEquals(AutomaticFixTrigger.FALLBACK_WINDOW, actions.captureRequests.single().trigger)
-
-        actions.captureRequests.clear()
-        orchestrator.onActivity(RecordingActivity.RUNNING, 3_000_000, 3_000_000)
-        actions.captureRequests.clear()
-        orchestrator.onFallback(3_000_001)
 
         assertTrue(actions.captureRequests.isEmpty())
     }
@@ -237,7 +201,6 @@ class AutomaticTrackingOrchestratorTest {
         assertEquals(1, actions.stopCaptureCount)
         assertEquals(unregistersBeforePause + 1, actions.unregisterOpportunisticCount)
         assertEquals(1, actions.unregisterActivityCount)
-        assertEquals(1, actions.cancelFallbackCount)
 
         orchestrator.resumeAfterRecording(
             wallTimeMillis = 20_000,
@@ -273,30 +236,6 @@ class AutomaticTrackingOrchestratorTest {
         assertEquals(1, actions.unregisterActivityCount)
         assertEquals(1, actions.unregisterOpportunisticCount)
         assertEquals(2, actions.stopCaptureCount)
-        assertEquals(1, actions.cancelFallbackCount)
-    }
-
-    @Test
-    fun staleFallbackDoesNotRearmWorkOutsideAutomaticMode() = runBlocking {
-        val disabledActions = FakeAutomaticTrackingActions()
-        AutomaticTrackingOrchestrator(
-            gateway = FakeAutomaticTrackingGateway(),
-            actions = disabledActions,
-        ).onFallback(elapsedRealtimeMillis = 2_000)
-
-        val recordingActions = FakeAutomaticTrackingActions()
-        AutomaticTrackingOrchestrator(
-            gateway = FakeAutomaticTrackingGateway(
-                preference = AutomaticTrackingPreference(true, 1_000),
-                recordingActive = true,
-            ),
-            actions = recordingActions,
-        ).onFallback(elapsedRealtimeMillis = 2_000)
-
-        assertTrue(disabledActions.scheduledFallbacks.isEmpty())
-        assertTrue(recordingActions.scheduledFallbacks.isEmpty())
-        assertTrue(disabledActions.captureRequests.isEmpty())
-        assertTrue(recordingActions.captureRequests.isEmpty())
     }
 
     @Test
@@ -333,7 +272,6 @@ class AutomaticTrackingOrchestratorTest {
 
         assertEquals(0, actions.registerActivityCount)
         assertEquals(0, actions.registerOpportunisticCount)
-        assertTrue(actions.scheduledFallbacks.isEmpty())
     }
 
     @Test
@@ -392,10 +330,8 @@ class AutomaticTrackingOrchestratorTest {
         var unregisterActivityCount = 0
         var registerOpportunisticCount = 0
         var unregisterOpportunisticCount = 0
-        val scheduledFallbacks = mutableListOf<Long>()
         val captureRequests = mutableListOf<AutomaticCaptureRequest>()
         var stopCaptureCount = 0
-        var cancelFallbackCount = 0
 
         override fun registerActivityTransitions() {
             registerActivityCount += 1
@@ -419,14 +355,6 @@ class AutomaticTrackingOrchestratorTest {
 
         override fun stopCapture() {
             stopCaptureCount += 1
-        }
-
-        override fun scheduleFallback(delayMillis: Long) {
-            scheduledFallbacks += delayMillis
-        }
-
-        override fun cancelFallback() {
-            cancelFallbackCount += 1
         }
     }
 }

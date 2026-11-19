@@ -6,11 +6,11 @@ import android.content.pm.PackageManager
 import androidx.core.content.ContextCompat
 
 internal fun Context.hasRequiredAutomaticTrackingPermissions(): Boolean =
-    ContextCompat.checkSelfPermission(
-        this,
-        Manifest.permission.ACCESS_FINE_LOCATION,
-    ) == PackageManager.PERMISSION_GRANTED &&
-        ContextCompat.checkSelfPermission(
-            this,
-            Manifest.permission.ACCESS_BACKGROUND_LOCATION,
-        ) == PackageManager.PERMISSION_GRANTED
+    hasAutomaticForegroundPermissions() && isGranted(Manifest.permission.ACCESS_BACKGROUND_LOCATION)
+
+internal fun Context.hasAutomaticForegroundPermissions(): Boolean =
+    isGranted(Manifest.permission.ACCESS_FINE_LOCATION) &&
+        isGranted(Manifest.permission.ACTIVITY_RECOGNITION)
+
+private fun Context.isGranted(permission: String): Boolean =
+    ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED

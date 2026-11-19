@@ -1,0 +1,3 @@
+# Require Activity Recognition for Automatic Tracking
+
+Automatic Tracking requires Activity Recognition and no longer schedules fallback Capture Windows. Android reports activity only when it changes, so recognition goes stale after 30 minutes of sitting still. The fallback then opened a high-accuracy window about once an hour at home or at work, which cost battery and rarely cleared new Coverage Cells. Its other purpose was to keep capture working when the user denied Activity Recognition. Requiring the permission removes that case: declining it leaves Automatic Tracking Off. Movement that Android misses may leave Gaps, and Opportunistic Fixes still cover some of them at no cost.

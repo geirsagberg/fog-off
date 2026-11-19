@@ -13,7 +13,6 @@ internal const val MAXIMUM_AUTOMATIC_INTERPOLATION_GAP_MILLIS = 120_000L
 internal enum class AutomaticFixTrigger(val persistedName: String) {
     INITIAL_ENABLE("initial_enable"),
     MOVEMENT_WINDOW("movement_window"),
-    FALLBACK_WINDOW("fallback_window"),
     OPPORTUNISTIC("opportunistic"),
 }
 

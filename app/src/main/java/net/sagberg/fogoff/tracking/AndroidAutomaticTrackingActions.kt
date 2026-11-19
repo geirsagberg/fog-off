@@ -77,19 +77,6 @@ internal class AndroidAutomaticTrackingActions(
         alarmManager.cancel(captureEndedPendingIntent())
     }
 
-    override fun scheduleFallback(delayMillis: Long) {
-        alarmManager.setWindow(
-            AlarmManager.ELAPSED_REALTIME_WAKEUP,
-            SystemClock.elapsedRealtime() + delayMillis,
-            FALLBACK_WINDOW_MILLIS,
-            fallbackPendingIntent(),
-        )
-    }
-
-    override fun cancelFallback() {
-        alarmManager.cancel(fallbackPendingIntent())
-    }
-
     private fun activityPendingIntent(): PendingIntent = broadcastPendingIntent(
         requestCode = REQUEST_ACTIVITY,
         action = AutomaticTrackingReceiver.ACTION_ACTIVITY,
@@ -112,11 +99,6 @@ internal class AndroidAutomaticTrackingActions(
         action = AutomaticTrackingReceiver.ACTION_CAPTURE_ENDED,
     )
 
-    private fun fallbackPendingIntent(): PendingIntent = broadcastPendingIntent(
-        requestCode = REQUEST_FALLBACK,
-        action = AutomaticTrackingReceiver.ACTION_FALLBACK,
-    )
-
     private fun broadcastPendingIntent(
         requestCode: Int,
         action: String,
@@ -133,8 +115,6 @@ internal class AndroidAutomaticTrackingActions(
         private const val REQUEST_OPPORTUNISTIC = 21
         private const val REQUEST_CAPTURE = 22
         private const val REQUEST_CAPTURE_ENDED = 23
-        private const val REQUEST_FALLBACK = 24
-        private const val FALLBACK_WINDOW_MILLIS = 15 * 60 * 1_000L
 
         private val TRANSITION_REQUEST = ActivityTransitionRequest(
             listOf(

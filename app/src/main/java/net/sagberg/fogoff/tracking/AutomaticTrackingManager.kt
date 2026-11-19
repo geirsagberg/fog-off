@@ -27,7 +27,6 @@ internal object AutomaticTrackingManager {
             unregisterActivityTransitions()
             unregisterOpportunisticFixes()
             stopCapture()
-            cancelFallback()
         }
         activityState.reset()
         captureState.stop()
@@ -72,11 +71,6 @@ internal object AutomaticTrackingManager {
             observedAtElapsedRealtimeMillis = observedAtElapsedRealtimeMillis,
             currentElapsedRealtimeMillis = SystemClock.elapsedRealtime(),
         )
-    }
-
-    suspend fun onFallback(context: Context) {
-        if (!hasPermissionForAutomaticEvent(context)) return
-        orchestrator(context).onFallback(SystemClock.elapsedRealtime())
     }
 
     suspend fun onCaptureEnded(context: Context) {

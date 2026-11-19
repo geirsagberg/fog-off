@@ -1,3 +1,5 @@
 # Use Best-Effort Background Capture for Passive Tracking
 
+The scheduled fallback windows are superseded by [ADR 0006](0006-require-activity-recognition-for-automatic-tracking.md).
+
 Passive Tracking will combine a no-power subscription for Opportunistic Fixes with high-accuracy Passive Capture Windows rather than keeping a location foreground service running. Each window is self-terminating, so missed stationary signals cannot turn passive capture into an accidental long-running stream. Fresh stationary recognition suppresses active windows, while unavailable or stale recognition permits sparse scheduled fallback windows instead of disabling capture or starting a constant stream. Android may throttle or miss background delivery and leave Passive Gaps; Kartoffel accepts that limitation to preserve Barely Noticeable Battery Use and a notification-free passive experience, while Recording Sessions remain the explicit, notification-backed reliable mode.
