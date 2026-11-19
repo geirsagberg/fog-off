@@ -91,12 +91,12 @@ Found under **App content → Sensitive app permissions → Location permissions
 
 **Why it needs background location:**
 
-> Users visit most places with the app closed and the phone in their pocket. Automatic tracking takes a few location fixes when the user turns it on. After that, it waits for Android to report that the user has started moving, then takes a few fixes and clears fog for the streets they pass. If Android has not reported the user's activity for a while, it takes a few fixes once an hour to catch movement it missed. These events arrive while the app is not in use, so foreground access would leave almost every visited place fogged. The user turns automatic tracking on from the app menu, sees an in-app disclosure before any permission prompt, and can turn it off at any time. Location history stays on the device and is never sent off it.
+> Users visit most places with the app closed and the phone in their pocket. Automatic tracking takes a few location fixes when the user turns it on. After that, it waits for Android to report that the user has started moving, then takes a few fixes and clears fog for the streets they pass. These events arrive while the app is not in use, so foreground access would leave almost every visited place fogged. The user turns automatic tracking on from the app menu, sees an in-app disclosure before any permission prompt, and can turn it off at any time. Location history stays on the device and is never sent off it.
 
 **Video:** a YouTube link (unlisted is fine), 30 seconds or less, showing:
 
 1. The map with fog, then **More options → Enable automatic tracking**.
 2. The in-app disclosure, then **Continue**.
-3. The location prompt, then **Allow all the time** in settings.
+3. The location and physical activity prompts, then **Allow all the time** in settings.
 4. The app closed while the phone moves along a route.
 5. The app reopened, with fog cleared along that route.

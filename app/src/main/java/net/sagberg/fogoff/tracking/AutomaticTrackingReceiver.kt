@@ -42,10 +42,9 @@ internal class AutomaticTrackingReceiver : BroadcastReceiver() {
                         intent,
                         intent.getStringExtra(EXTRA_TRIGGER)
                             ?.let(AutomaticFixTrigger::valueOf)
-                            ?: AutomaticFixTrigger.FALLBACK_WINDOW,
+                            ?: AutomaticFixTrigger.MOVEMENT_WINDOW,
                     )
                     ACTION_CAPTURE_ENDED -> AutomaticTrackingManager.onCaptureEnded(context)
-                    ACTION_FALLBACK -> AutomaticTrackingManager.onFallback(context)
                 }
             } finally {
                 pendingResult.finish()
@@ -88,7 +87,6 @@ internal class AutomaticTrackingReceiver : BroadcastReceiver() {
             "net.sagberg.fogoff.action.PASSIVE_CAPTURE_FIX"
         internal const val ACTION_CAPTURE_ENDED =
             "net.sagberg.fogoff.action.PASSIVE_CAPTURE_ENDED"
-        internal const val ACTION_FALLBACK = "net.sagberg.fogoff.action.PASSIVE_FALLBACK"
         internal const val ACTION_RESTORE = "net.sagberg.fogoff.action.PASSIVE_RESTORE"
         internal const val EXTRA_TRIGGER = "passive_trigger"
     }

@@ -50,14 +50,14 @@ class AutomaticTrackingRecorderTest {
                 capturedAtMillis = 3_000,
                 accuracyMeters = 26.0,
             ),
-            trigger = AutomaticFixTrigger.FALLBACK_WINDOW,
+            trigger = AutomaticFixTrigger.MOVEMENT_WINDOW,
             activity = RecordingActivity.UNKNOWN,
         )
 
         val samples = database.locationSamples().between(0, 4_000)
         assertEquals(listOf(true, false), samples.map { it.accepted })
         assertEquals(
-            listOf("opportunistic", "fallback_window"),
+            listOf("opportunistic", "movement_window"),
             samples.map { it.trigger },
         )
         assertEquals(listOf("walking", "unknown"), samples.map { it.activityMode })
@@ -77,13 +77,13 @@ class AutomaticTrackingRecorderTest {
         settings.setMaximumAcceptedAccuracyMeters(20)
         val rejected = recorder.record(
             firstFix,
-            AutomaticFixTrigger.FALLBACK_WINDOW,
+            AutomaticFixTrigger.MOVEMENT_WINDOW,
             RecordingActivity.UNKNOWN,
         )
         settings.setMaximumAcceptedAccuracyMeters(25)
         val accepted = recorder.record(
             firstFix.copy(capturedAtMillis = 3_000),
-            AutomaticFixTrigger.FALLBACK_WINDOW,
+            AutomaticFixTrigger.MOVEMENT_WINDOW,
             RecordingActivity.UNKNOWN,
         )
 

@@ -84,6 +84,7 @@ import net.sagberg.fogoff.storage.AutomaticTrackingPreferences
 import net.sagberg.fogoff.storage.DatabaseBackupManager
 import net.sagberg.fogoff.storage.FogOffDatabase
 import net.sagberg.fogoff.tracking.AutomaticTrackingManager
+import net.sagberg.fogoff.tracking.hasAutomaticForegroundPermissions
 import net.sagberg.fogoff.tracking.RecordingService
 import net.sagberg.fogoff.ui.theme.LocalDarkTheme
 
@@ -288,7 +289,7 @@ private fun MapRoute(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) {
         hasLocationPermission = context.hasForegroundLocationPermission()
-        if (hasLocationPermission) {
+        if (context.hasAutomaticForegroundPermissions()) {
             automaticBackgroundPermissionLauncher.launch(
                 Manifest.permission.ACCESS_BACKGROUND_LOCATION,
             )

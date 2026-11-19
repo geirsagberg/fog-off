@@ -5,7 +5,6 @@ import net.sagberg.fogoff.diagnostics.LiveTrackingDiagnostics
 import net.sagberg.fogoff.diagnostics.RequestedIntervalReason
 import net.sagberg.fogoff.storage.AutomaticTrackingPreference
 
-internal const val AUTOMATIC_FALLBACK_INTERVAL_MILLIS = 60 * 60 * 1_000L
 internal const val AUTOMATIC_ACTIVITY_FRESHNESS_MILLIS = 30 * 60 * 1_000L
 internal const val AUTOMATIC_CAPTURE_DURATION_MILLIS = 90_000L
 internal const val AUTOMATIC_CAPTURE_MAXIMUM_FIXES = 6
@@ -52,10 +51,6 @@ internal interface AutomaticTrackingActions {
     fun startCapture(request: AutomaticCaptureRequest)
 
     fun stopCapture()
-
-    fun scheduleFallback(delayMillis: Long)
-
-    fun cancelFallback()
 }
 
 internal class AutomaticActivityState {
@@ -142,7 +137,6 @@ internal class AutomaticTrackingOrchestrator(
         gateway.enable(wallTimeMillis)
         if (gateway.recordingActive()) return
         actions.registerActivityTransitions()
-        actions.scheduleFallback(AUTOMATIC_FALLBACK_INTERVAL_MILLIS)
         startCapture(
             AutomaticCaptureRequest(
                 trigger = AutomaticFixTrigger.INITIAL_ENABLE,
@@ -177,22 +171,6 @@ internal class AutomaticTrackingOrchestrator(
         startCapture(
             AutomaticCaptureRequest(
                 trigger = AutomaticFixTrigger.MOVEMENT_WINDOW,
-                activity = activity,
-                intervalMillis = activity.automaticIntervalMillis,
-            ),
-        )
-    }
-
-    suspend fun onFallback(elapsedRealtimeMillis: Long) {
-        require(elapsedRealtimeMillis >= 0)
-        if (!gateway.preference().enabled || gateway.recordingActive()) return
-        actions.scheduleFallback(AUTOMATIC_FALLBACK_INTERVAL_MILLIS)
-        val activity = activityState.activityAt(elapsedRealtimeMillis)
-        if (activity != RecordingActivity.UNKNOWN) return
-        actions.unregisterOpportunisticFixes()
-        startCapture(
-            AutomaticCaptureRequest(
-                trigger = AutomaticFixTrigger.FALLBACK_WINDOW,
                 activity = activity,
                 intervalMillis = activity.automaticIntervalMillis,
             ),
@@ -242,7 +220,6 @@ internal class AutomaticTrackingOrchestrator(
         stopCapture()
         actions.unregisterOpportunisticFixes()
         actions.unregisterActivityTransitions()
-        actions.cancelFallback()
     }
 
     suspend fun resumeAfterRecording(
@@ -255,7 +232,6 @@ internal class AutomaticTrackingOrchestrator(
         gateway.enable(wallTimeMillis)
         actions.registerActivityTransitions()
         actions.registerOpportunisticFixes()
-        actions.scheduleFallback(AUTOMATIC_FALLBACK_INTERVAL_MILLIS)
         val activity = activityState.activityAt(elapsedRealtimeMillis)
         if (activity != RecordingActivity.STILL && activity != RecordingActivity.UNKNOWN) {
             actions.unregisterOpportunisticFixes()
@@ -280,7 +256,6 @@ internal class AutomaticTrackingOrchestrator(
             actions.registerOpportunisticFixes()
             diagnostics.automaticWaiting(RecordingActivity.UNKNOWN)
         }
-        actions.scheduleFallback(AUTOMATIC_FALLBACK_INTERVAL_MILLIS)
     }
 
     suspend fun disable() {
@@ -289,7 +264,6 @@ internal class AutomaticTrackingOrchestrator(
         stopCapture()
         actions.unregisterOpportunisticFixes()
         actions.unregisterActivityTransitions()
-        actions.cancelFallback()
         diagnostics.automaticStopped()
     }
 
@@ -337,7 +311,6 @@ internal class AutomaticTrackingOrchestrator(
             reason = when (request.trigger) {
                 AutomaticFixTrigger.INITIAL_ENABLE -> RequestedIntervalReason.AUTOMATIC_INITIAL
                 AutomaticFixTrigger.MOVEMENT_WINDOW -> RequestedIntervalReason.AUTOMATIC_WINDOW
-                AutomaticFixTrigger.FALLBACK_WINDOW -> RequestedIntervalReason.SAFE_FALLBACK
                 AutomaticFixTrigger.OPPORTUNISTIC -> error("Opportunistic fixes do not start capture")
             },
         )
